@@ -38,7 +38,7 @@ int main(void)
 		ClearBackground(RAYWHITE);
 
 		//draws the line
-		DrawLine(0, 0, screenWidth, screenHeight, BLACK);
+		DrawLine(0, screenHeight, screenWidth, 0, BLACK);
 
 		//draws the training data
 		for (int i = 0; i < points.size(); i++) {
@@ -52,9 +52,9 @@ int main(void)
 			//draws if the guess was right
 			int guess = perceptron.guess(pointInputs);
 			if (guess == target)
-				DrawCircle(points[i].x, points[i].y, Point::visualisationSize - 3, GREEN);
+				DrawCircle(points[i].GetPixelX(), points[i].GetPixelY(), Point::visualisationSize - 3, GREEN);
 			else
-				DrawCircle(points[i].x, points[i].y, Point::visualisationSize - 3, RED);
+				DrawCircle(points[i].GetPixelX(), points[i].GetPixelY(), Point::visualisationSize - 3, RED);
 		}
 
 		//if the left mouse is clicked
