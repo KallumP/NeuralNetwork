@@ -1,18 +1,23 @@
 #pragma once
-#include <array>
+#include <vector>
 
 class Perceptron {
 
 public:
-	Perceptron();
+	Perceptron(int size);
 	
-	int guess(std::array<float, 2> inputs);
-	void train(std::array<float, 2> inputs, int actualValue);
+	void Draw();
+
+	int guess(std::vector<float> inputs);
+	void train(std::vector<float> inputs, int actualValue);
 
 private:
 
-	std::array<float, 2> inputs;
-	std::array<float, 2> weights;
+	int sign(float toCheck);
+	float approximatedF(float x);
+
+	std::vector<float> inputs;
+	std::vector<float> weights;
 	float learningRate = 0.1f;
 };
 

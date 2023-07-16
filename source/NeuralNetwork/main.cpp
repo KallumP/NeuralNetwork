@@ -7,71 +7,74 @@
 #include "Perceptron.h"
 #include "TrainingData.h"
 
+
+float Function::M = 0.0f;  // Initialization of static variables outside the function
+float Function::B = 0.0f;
+
+
 int main(void)
 {
 
-	const int screenWidth = 450;
-	const int screenHeight = 450;
+	const int screenWidth = 720;
+	const int screenHeight = 720;
 	InitWindow(screenWidth, screenHeight, "Neural Net");
 	SetTargetFPS(60);
 
 
 
-
+	//sets the function to be approximated
+	Function::SetFunctionValues();
 
 	//creates the set of training data
-	std::array<Point, 100> points;
-	for (int i = 0; i < points.size(); i++)
-		points[i] = Point();
+	std::array<TrainingData, 2000> data;
+	for (int i = 0; i < data.size(); i++)
+		data[i] = TrainingData();
 
 
-
-	Perceptron perceptron;
-	//std::array<float, 2> inputs = { 10, 20 };
-	//int guess = perceptron.guess(inputs);
-	//std::cout << guess;
+	Perceptron perceptron = Perceptron(3);
 
 	while (!WindowShouldClose()) {
 
 		BeginDrawing();
-
 		ClearBackground(RAYWHITE);
 
-		//draws the line
-		DrawLine(0, screenHeight, screenWidth, 0, BLACK);
+		//draws the function line
+		Point lineStart = Point(-1, Function::f(-1));
+		Point lineEnd = Point(1, Function::f(1));
+		DrawLine(lineStart.GetPixelX(), lineStart.GetPixelY(), lineEnd.GetPixelX(), lineEnd.GetPixelY(), BLACK);
 
 		//draws the training data
-		for (int i = 0; i < points.size(); i++) {
+		for (int i = 0; i < data.size(); i++) {
 
-			points[i].Draw();
+			//draws the datapoint
+			data[i].Draw();
 
 			//creates an input out of the training data
-			std::array<float, 2> pointInputs = { points[i].x, points[i].y };
-			int target = points[i].actualValue;
+			std::vector<float> pointInputs = { data[i].p.x, data[i].p.y, data[i].bias };
+			int target = data[i].actualValue;
 
 			//draws if the guess was right
 			int guess = perceptron.guess(pointInputs);
 			if (guess == target)
-				DrawCircle(points[i].GetPixelX(), points[i].GetPixelY(), Point::visualisationSize - 3, GREEN);
+				DrawCircle(data[i].p.GetPixelX(), data[i].p.GetPixelY(), Helper::visualisationSize - 3, GREEN);
 			else
-				DrawCircle(points[i].GetPixelX(), points[i].GetPixelY(), Point::visualisationSize - 3, RED);
+				DrawCircle(data[i].p.GetPixelX(), data[i].p.GetPixelY(), Helper::visualisationSize - 3, RED);
 		}
 
-		//if the left mouse is clicked
-		if (IsMouseButtonPressed(0)) {
+		//draws the function that the perceptron has approximated so far
+		perceptron.Draw();
 
-			//trains the perceptron
-			for (int i = 0; i < points.size(); i++) {
 
-				//creates an input out of the training data
-				std::array<float, 2> pointInputs = { points[i].x, points[i].y };
-				int target = points[i].actualValue;
+		//trains the perceptron
+		for (int i = 0; i < data.size(); i++) {
 
-				//trains the data
-				perceptron.train(pointInputs, target);
-			}
+			//creates an input out of the training data
+			std::vector<float> pointInputs = { data[i].p.x, data[i].p.y, data[i].bias };
+			int target = data[i].actualValue;
+
+			//trains the data
+			perceptron.train(pointInputs, target);
 		}
-
 
 		EndDrawing();
 	}

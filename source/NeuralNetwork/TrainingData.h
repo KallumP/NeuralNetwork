@@ -2,37 +2,30 @@
 
 #include "Helper.h"
 
-struct Point {
-	float x;
-	float y;
+
+struct TrainingData {
+	
+	Point p;
+	float bias = 1;
 	int actualValue;
 
-	static const int visualisationSize = 10;
+	TrainingData() {
 
-	Point() {
+		p = Point();
 
-		x = Helper::RandomFloat(-1, 1);
-		y = Helper::RandomFloat(-1, 1);
-		actualValue = -1;
-
-		if (x < y)
+		//sets the data for if the point for this data is above the line
+		float expectedY = Function::f(p.x);
+		if (p.y > expectedY)
 			actualValue = 1;
+		else
+			actualValue = -1;
 	}
 
 	void Draw() {
 
-
 		if (actualValue == 1)
-			DrawCircle(GetPixelX(), GetPixelY(), visualisationSize, BLACK);
+			DrawCircleLines(p.GetPixelX(), p.GetPixelY(), Helper::visualisationSize, BLACK);
 		else
-			DrawCircleLines(GetPixelX(), GetPixelY(), visualisationSize, BLACK);
-	}
-
-	float GetPixelX() {
-		return Helper::Map(x, -1.0, 1.0, 0.0, GetScreenWidth());
-	}
-
-	float GetPixelY() {
-		return Helper::Map(y, -1.0, 1.0, GetScreenHeight(), 0.0);
+			DrawCircle(p.GetPixelX(), p.GetPixelY(), Helper::visualisationSize, BLACK);
 	}
 };
