@@ -1,5 +1,6 @@
 #pragma once
 #include <random>
+#include <cmath>
 
 class Helper {
 
@@ -40,4 +41,7 @@ public:
         //https://stackoverflow.com/questions/17134839/how-does-the-map-function-in-processing-work
     }
 
+    static float Sigmoid(float x) {
+        return (float)1.0 / ((float)1.0f + std::expf(-x));
+    }
 };

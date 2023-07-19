@@ -2,6 +2,7 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include <functional>
 
 #include "Helper.h"
 
@@ -9,7 +10,13 @@ class Matrix {
 
 public:
 
-	//constructor
+	//default constructor
+	Matrix() {
+		rows = 0;
+		cols = 0;
+	}
+
+	//empty matrix constructor
 	Matrix(int _rows, int _cols) {
 		rows = _rows;
 		cols = _cols;
@@ -31,6 +38,26 @@ public:
 		}
 	}
 
+	//makes a matrix out of the inputted vector
+	Matrix(std::vector<float> input) {
+
+		rows = input.size();
+		cols = 1;
+
+		//loops through each row to be initialised
+		for (int r = 0; r < rows; r++) {
+
+			//creates a vector of columns
+			std::vector<float> rowBuffer;
+
+			//adds the vector value for this row
+			rowBuffer.push_back(input[r]);
+
+			//adds this row to the matrix
+			matrix.push_back(rowBuffer);
+		}
+	}
+
 	//draws the matrix to the console
 	void TextDraw() {
 		for (int r = 0; r < rows; r++) {
@@ -46,6 +73,19 @@ public:
 		}
 	}
 
+	//returns a flattened vector (the values from each row will be next to each other)
+	std::vector<float> AsVector() {
+		
+		
+		std::vector<float> toReturn;
+
+		for (int r = 0; r < rows; r++)
+			for (int c = 0; c < cols; c++)
+				toReturn.push_back(matrix[r][c]);
+
+		return toReturn;
+	}
+
 	//fills the matrix in with random floats between a bound
 	void RandomizeFloats(int lowerBound, int upperBound) {
 		for (int r = 0; r < rows; r++)
@@ -59,6 +99,7 @@ public:
 			for (int c = 0; c < cols; c++)
 				matrix[r][c] = Helper::RandomFloat(lowerBound, upperBound);
 	}
+
 
 
 	//adds the input value to all cells in the matrix
@@ -80,7 +121,6 @@ public:
 				matrix[r][c] += m.matrix[r][c];
 	}
 
-
 	//multiplies the input value to all the cells in the matrix
 	void ScalarMultiply(float n) {
 		for (int r = 0; r < rows; r++)
@@ -100,30 +140,25 @@ public:
 	}
 
 	//returns a new matrix whcich has the result of a matrix multiplcation on the two input matrices
-	static Matrix MatrixMultiply(Matrix m1, Matrix m2) {
+	static Matrix Multiply(Matrix m1, Matrix m2) {
 
 		if (!MatrixMultiplyCompatible(m1, m2))
-			return Matrix(0,0);
+			return Matrix(0, 0);
 
 		Matrix toReturn = Matrix(m1.rows, m2.cols);
 
 		//loops through each cell in the resulting matrix
-		for (int r = 0; r < toReturn.rows; r++) {
-			for (int c = 0; c < toReturn.cols; c++) {
+		for (int r = 0; r < toReturn.rows; r++)
+			for (int c = 0; c < toReturn.cols; c++)
 
-				float sum = 0;
-
-				//loops through each column in matrix 1
+				//loops through each value to add
 				for (int i = 0; i < m1.cols; i++)
-						
-					sum += m1.matrix[r][i] * m2.matrix[i][c];
-					
-				toReturn.matrix[r][c] = sum;
-			}
-		}
+
+					toReturn.matrix[r][c] += m1.matrix[r][i] * m2.matrix[i][c];
 
 		return toReturn;
 	}
+
 
 
 	//returns a transposed matrix of the input matrix
@@ -137,6 +172,20 @@ public:
 
 		return m2;
 	}
+
+	//applies a function to each cell in the matrix
+	void ApplySigmoid() {
+
+		for (int r = 0; r < rows; r++) {
+
+			for (int c = 0; c < cols; c++) {
+
+				float val = Helper::Sigmoid(matrix[r][c]);
+				matrix[r][c] = val;
+			}
+		}
+	}
+
 
 
 	//returns if the two matrices can be elementwise operated
