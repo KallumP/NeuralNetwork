@@ -7,17 +7,24 @@
 #include "Perceptron.h"
 #include "TrainingData.h"
 
-
-float Function::M = 0.0f;  // Initialization of static variables outside the function
+// Initialization of static variables
+float Function::M = 0.0f;
 float Function::B = 0.0f;
 
+std::vector<TrainingData> GenerateTrainingData(int desiredDataCount) {
+	std::vector<TrainingData> data;
+	for (int i = 0; i < desiredDataCount; i++)
+		data.push_back(TrainingData());
+
+	return data;
+}
 
 int main(void)
 {
 
 	const int screenWidth = 720;
 	const int screenHeight = 720;
-	InitWindow(screenWidth, screenHeight, "Neural Net");
+	InitWindow(screenWidth, screenHeight, "Perceptron");
 	SetTargetFPS(60);
 
 
@@ -26,9 +33,7 @@ int main(void)
 	Function::SetFunctionValues();
 
 	//creates the set of training data
-	std::array<TrainingData, 2000> data;
-	for (int i = 0; i < data.size(); i++)
-		data[i] = TrainingData();
+	std::vector<TrainingData> data = GenerateTrainingData(5000);
 
 
 	Perceptron perceptron = Perceptron(3);

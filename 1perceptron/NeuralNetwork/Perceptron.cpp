@@ -3,11 +3,9 @@
 
 Perceptron::Perceptron(int size) {
 
-	weights.resize(size);
-
 	//initialises the weights randomly
-	for (int i = 0; i < weights.size(); i++) 
-		weights[i] = Helper::RandomInt(-1, 1);
+	for (int i = 0; i < size; i++) 
+		weights.push_back(Helper::RandomFloat(-1, 1));
 }
 
 void Perceptron::Draw() {

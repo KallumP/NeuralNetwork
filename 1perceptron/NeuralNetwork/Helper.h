@@ -4,7 +4,7 @@
 #include <random>
 
 
-static class Helper {
+class Helper {
 
 public:
 
@@ -24,14 +24,14 @@ public:
     }
 
     //returns a random weight between 1, -1
-	static double RandomInt(int lowerBound, int upperBound) {
+	static int RandomInt(int lowerBound, int upperBound) {
 
         std::random_device rd;  // Obtain a random seed from the hardware
         std::mt19937 gen(rd()); // Seed the random number engine
 
         std::uniform_int_distribution<int> dis(lowerBound, upperBound); // Define the distribution
 
-        float randomNumber = dis(gen);  // Generate a random number between the lower and upper bounds
+        int randomNumber = dis(gen);  // Generate a random number between the lower and upper bounds
 
         return randomNumber;
 	}
@@ -77,7 +77,7 @@ struct Function {
     //sets a random set of function parameters
     static void SetFunctionValues() {
         M = Helper::RandomFloat(-1, 1);
-        B = Helper::RandomFloat(-1, 1);
+        B = Helper::RandomFloat(-0.5, 0.5);
     }
     
     //get the y value for the given x from this function
