@@ -33,7 +33,7 @@ int main(void)
 	Function::SetFunctionValues();
 
 	//creates the set of training data
-	std::vector<TrainingData> data = GenerateTrainingData(5000);
+	std::vector<TrainingData> data = GenerateTrainingData(1000);
 
 
 	Perceptron perceptron = Perceptron(3);
