@@ -42,6 +42,10 @@ public:
     }
 
     static float Sigmoid(float x) {
-        return (float)1.0 / ((float)1.0f + std::expf(-x));
+        return 1.0f / (1.0f + std::exp(-x));
+    }
+
+    static float dSigmoid(float x) {
+        return x * (1.0f - x);
     }
 };

@@ -75,8 +75,8 @@ public:
 
 	//returns a flattened vector (the values from each row will be next to each other)
 	std::vector<float> AsVector() {
-		
-		
+
+
 		std::vector<float> toReturn;
 
 		for (int r = 0; r < rows; r++)
@@ -119,6 +119,21 @@ public:
 		for (int r = 0; r < rows; r++)
 			for (int c = 0; c < cols; c++)
 				matrix[r][c] += m.matrix[r][c];
+	}
+
+	//elementwise subtract
+	static Matrix ElementSubtract(Matrix m1, Matrix m2) {
+
+		if (!ElementWiseCompatible(m1, m2))
+			return Matrix();
+
+		Matrix toReturn = Matrix(m1.rows, m1.cols);
+
+		for (int r = 0; r < m1.rows; r++)
+			for (int c = 0; c < m1.cols; c++)
+				toReturn.matrix[r][c] = m1.matrix[r][c] - m2.matrix[r][c];
+
+		return toReturn;
 	}
 
 	//multiplies the input value to all the cells in the matrix
@@ -166,27 +181,42 @@ public:
 
 		Matrix m2 = Matrix(m1.cols, m1.rows);
 
-		for (int r = 0; r < m2.rows; r++)
-			for (int c = 0; c < m2.cols; c++)
-				m2.matrix[r][c] = m1.matrix[c][r];
+		for (int r = 0; r < m1.rows; r++)
+			for (int c = 0; c < m1.cols; c++)
+				m2.matrix[c][r] = m1.matrix[r][c];
 
 		return m2;
 	}
 
-	//applies a function to each cell in the matrix
-	void ApplySigmoid() {
-
+	//applies a function to all cells in the matrix
+	void ScalarMap(const std::function<float(float x)>& func) {
 		for (int r = 0; r < rows; r++) {
 
 			for (int c = 0; c < cols; c++) {
 
-				float val = Helper::Sigmoid(matrix[r][c]);
-				matrix[r][c] = val;
+				float val = matrix[r][c];
+				float newVal = func(val);
+				matrix[r][c] = newVal;
 			}
 		}
 	}
 
+	static Matrix ScalarMap(Matrix m1, const std::function<float(float x)>& func) {
 
+		Matrix toReturn = Matrix(m1.rows, m1.cols);
+
+		for (int r = 0; r < toReturn.rows; r++) {
+
+			for (int c = 0; c < toReturn.cols; c++) {
+
+				float val = m1.matrix[r][c];
+				float newVal = func(val);
+				toReturn.matrix[r][c] = newVal;
+			}
+		}
+
+		return toReturn;
+	}
 
 	//returns if the two matrices can be elementwise operated
 	static bool ElementWiseCompatible(Matrix m1, Matrix m2) {
@@ -198,7 +228,6 @@ public:
 		return m1.cols == m2.rows;
 	}
 
-private:
 	std::vector<std::vector<float>> matrix; //rows x cols
 	int rows;
 	int cols;
