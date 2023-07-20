@@ -7,7 +7,7 @@ NeuralNetwork::NeuralNetwork(int _numberOfInputNodes, int _numberOfHiddenNodes, 
 	numberOfHiddenNodes = _numberOfHiddenNodes;
 	numberOfOutputNodes = _numberOfOutputNodes;
 
-	learningRate = 0.01f;
+	learningRate = 0.1f;
 	
 	inputToHiddenWeights = Matrix(numberOfHiddenNodes, numberOfInputNodes);
 	inputToHiddenWeights.RandomizeFloats(-1, 1);
@@ -89,7 +89,7 @@ void NeuralNetwork::train(std::vector<float> vectorInput, std::vector<float> vec
 
 	//calculates the changes needed
 	Matrix input_t = Matrix::Transpose(inputs);
-	Matrix deltaInputToHiddenWeights = Matrix::Multiply(inputToHiddenWeights, input_t);
+	Matrix deltaInputToHiddenWeights = Matrix::Multiply(inputToHiddenGradients, input_t);
 
 
 	//apply the changes to the weights 
