@@ -69,6 +69,8 @@ public:
 					continue;
 				rowString += ", ";
 			}
+			
+			if (r != rows - 1);
 			std::cout << rowString << std::endl;
 		}
 	}
