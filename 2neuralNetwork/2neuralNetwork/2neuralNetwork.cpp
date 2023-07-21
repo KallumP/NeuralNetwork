@@ -6,10 +6,10 @@
 
 int main()
 {
+	std::vector<int> layerCounts = { 2, 3, 2, 1 };
+	NeuralNetwork n = NeuralNetwork(layerCounts);
 
-	NeuralNetwork n = NeuralNetwork(2, 2, 1);
-
-	std::vector<DataStructure> data = TrainingData::SetupAndData();
+	std::vector<DataStructure> data = TrainingData::XorData();
 
 	int timesToTrain = 50000;
 	for (int i = 0; i < timesToTrain; i++) {
@@ -20,10 +20,10 @@ int main()
 		if (i == 0)
 			continue;
 
-		if (i % 1000 != 0)
+		if (i % 2000 != 0)
 			continue;
-			
-		std::cout << "Progress: " << i << " / " << timesToTrain << std::endl;
+		
+		std::cout << "Progress: " << 100 * i / timesToTrain << " %" << std::endl;
 	}
 
 	for (int i = 0; i < data.size(); i++) {

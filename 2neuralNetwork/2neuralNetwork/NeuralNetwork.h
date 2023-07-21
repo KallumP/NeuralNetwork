@@ -5,20 +5,20 @@
 class NeuralNetwork {
 
 public:
-	NeuralNetwork(int _numberOfInputNodes, int _numberOfHiddenNodes, int _numberOfOutputNodes);
+	NeuralNetwork(std::vector<int> _nodeCounts);
 
 	Matrix feedForward(std::vector<float> vectorInput);
 	void train(std::vector<float> vectorInput, std::vector<float> targets);
+
 private:
-	int numberOfInputNodes;
-	int numberOfHiddenNodes;
-	int numberOfOutputNodes;
+
+	std::vector<int> layers;
+
+	std::vector<Matrix> weights;
+	std::vector<Matrix> biases;
+
+	std::vector<Matrix> layerOutputs;
+	
 	float learningRate;
-
-	Matrix inputToHiddenWeights;
-	Matrix hiddenToOutputWeights;
-
-	Matrix biasHidden;
-	Matrix biasOutput;
 };
 

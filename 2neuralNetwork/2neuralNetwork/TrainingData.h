@@ -10,7 +10,7 @@ struct DataStructure {
 
 class TrainingData {
 public:
-	static std::vector<DataStructure> SetupXorData() {
+	static std::vector<DataStructure> XorData() {
 		
 		std::vector<DataStructure> data;
 
@@ -37,7 +37,7 @@ public:
 		return data;
 	}
 
-	static std::vector<DataStructure> SetupAndData() {
+	static std::vector<DataStructure> AndData() {
 
 		std::vector<DataStructure> data;
 
