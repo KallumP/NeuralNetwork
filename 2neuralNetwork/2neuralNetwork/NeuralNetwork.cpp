@@ -55,7 +55,7 @@ Matrix NeuralNetwork::feedForward(std::vector<float> vectorInput) {
 }
 
 //trains the network using the the target data
-void NeuralNetwork::train(std::vector<float> vectorInput, std::vector<float> vectorTargets) {
+Matrix NeuralNetwork::train(std::vector<float> vectorInput, std::vector<float> vectorTargets) {
 
 	//does the prediction
 	Matrix finalOutputs = feedForward(vectorInput);
@@ -72,7 +72,7 @@ void NeuralNetwork::train(std::vector<float> vectorInput, std::vector<float> vec
 		int weightsIndex = i - 1; //weights and biases has one less entry, so index is one less
 
 		Matrix outputs = layerOutputs[i]; //gets the current layer outputs
-		Matrix errors = getLayerError(i, finalOutputsErrors);
+		Matrix errors = getLayerError(i, finalOutputsErrors); //gets the errors for this layer
 
 		//calculates the gradients
 		Matrix gradients = Matrix::ScalarMap(outputs, Helper::dSigmoid); //unsigmoids the output
@@ -82,12 +82,14 @@ void NeuralNetwork::train(std::vector<float> vectorInput, std::vector<float> vec
 		//calculate the changes needed to the hidden to output weights
 		Matrix previousOutputs = layerOutputs[i - 1]; //gets the previous layer output
 		Matrix previousOutputs_t = Matrix::Transpose(previousOutputs); //transpose the hidden layer's output
-		Matrix deltaWeights = Matrix::Multiply(gradients, previousOutputs_t);
+		Matrix deltaWeights = Matrix::Multiply(gradients, previousOutputs_t); //gets the change in weights required to get better outputs
 
 		//update hidden to output weights
 		weights[weightsIndex].ElementAdd(deltaWeights);
 		biases[weightsIndex].ElementAdd(gradients);
 	}
+
+	return finalOutputsErrors;
 }
 
 //returns the error for the layer of the given index

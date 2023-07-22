@@ -8,7 +8,7 @@ public:
 	NeuralNetwork(std::vector<int> _nodeCounts);
 
 	Matrix feedForward(std::vector<float> vectorInput);
-	void train(std::vector<float> vectorInput, std::vector<float> targets);
+	Matrix train(std::vector<float> vectorInput, std::vector<float> targets);
 
 private:
 
