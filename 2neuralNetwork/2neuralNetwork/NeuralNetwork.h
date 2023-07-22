@@ -12,11 +12,11 @@ public:
 
 private:
 
-	std::vector<int> layers;
+	Matrix getLayerError(int index, Matrix finalOutputErrors);
 
+	std::vector<int> layers;
 	std::vector<Matrix> weights;
 	std::vector<Matrix> biases;
-
 	std::vector<Matrix> layerOutputs;
 	
 	float learningRate;

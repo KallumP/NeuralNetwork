@@ -26,6 +26,7 @@ NeuralNetwork::NeuralNetwork(std::vector<int> _layers) {
 //forward propegation to process the input through the layer up to the output
 Matrix NeuralNetwork::feedForward(std::vector<float> vectorInput) {
 
+	//resets the vector of outputs
 	layerOutputs.clear();
 
 	//loops through each layer
@@ -45,7 +46,7 @@ Matrix NeuralNetwork::feedForward(std::vector<float> vectorInput) {
 			Matrix layerOutput = Matrix::Multiply(weights[weightsIndex], layerOutputs[i - 1]); //layer's weights multiplied with the previous layer's output
 			layerOutput.ElementAdd(biases[weightsIndex]); //layer's output after bias
 			layerOutput.ScalarMap(Helper::Sigmoid); //activation function
-			layerOutputs.push_back(layerOutput);
+			layerOutputs.push_back(layerOutput); //save the output
 		}
 	}
 
@@ -53,50 +54,56 @@ Matrix NeuralNetwork::feedForward(std::vector<float> vectorInput) {
 	return layerOutputs[layerOutputs.size() - 1];
 }
 
+//trains the network using the the target data
 void NeuralNetwork::train(std::vector<float> vectorInput, std::vector<float> vectorTargets) {
 
-
 	//does the prediction
-	Matrix finalOutput = feedForward(vectorInput);
+	Matrix finalOutputs = feedForward(vectorInput);
 
 	//gets the final output targets
 	Matrix targets = Matrix(vectorTargets);
 
 	//gets the final output errors
-	Matrix finalOutputErrors = Matrix::ElementSubtract(targets, finalOutput);
-
-	Matrix nextLayerError; //container to hold the next layers error (so that it doesnt have to be recursivley computed each time)
+	Matrix finalOutputsErrors = Matrix::ElementSubtract(targets, finalOutputs);
 
 	//loops through each layer
 	for (int i = layers.size() - 1; i > 0; i--) {
 
-		int weightsIndex = i - 1;
+		int weightsIndex = i - 1; //weights and biases has one less entry, so index is one less
 
-		Matrix layerOutput = layerOutputs[i]; //gets the current layer outputs
-		Matrix layerErrors = finalOutputErrors; //sets the current error to the final error
-
-		if (i < layers.size() - 1) { //not the last layer
-
-			//calculate the errors for the layer based on the next layer
-			Matrix nextLayersWeights_t = Matrix::Transpose(weights[weightsIndex + 1]);
-			layerErrors = Matrix::Multiply(nextLayersWeights_t, nextLayerError);
-		}
-		
-		//stores this layers error to be used in the next iteration
-		nextLayerError = layerErrors;
+		Matrix outputs = layerOutputs[i]; //gets the current layer outputs
+		Matrix errors = getLayerError(i, finalOutputsErrors);
 
 		//calculates the gradients
-		Matrix layerGradients = Matrix::ScalarMap(layerOutput, Helper::dSigmoid); //unsigmoids the output
-		layerGradients.ElementMultiply(layerErrors); //times each gradient by the errors
-		layerGradients.ScalarMultiply(learningRate); //times each errored gradient by the learning rate
+		Matrix gradients = Matrix::ScalarMap(outputs, Helper::dSigmoid); //unsigmoids the output
+		gradients.ElementMultiply(errors); //times each gradient by the errors
+		gradients.ScalarMultiply(learningRate); //times each errored gradient by the learning rate
 
 		//calculate the changes needed to the hidden to output weights
-		Matrix previousLayerOutput = layerOutputs[i - 1]; //gets the previous layer output
-		Matrix previousLayerOutput_t = Matrix::Transpose(previousLayerOutput); //transpose the hidden layer's output
-		Matrix deltaWeights = Matrix::Multiply(layerGradients, previousLayerOutput_t);
+		Matrix previousOutputs = layerOutputs[i - 1]; //gets the previous layer output
+		Matrix previousOutputs_t = Matrix::Transpose(previousOutputs); //transpose the hidden layer's output
+		Matrix deltaWeights = Matrix::Multiply(gradients, previousOutputs_t);
 
 		//update hidden to output weights
 		weights[weightsIndex].ElementAdd(deltaWeights);
-		biases[weightsIndex].ElementAdd(layerGradients);
+		biases[weightsIndex].ElementAdd(gradients);
 	}
+}
+
+//returns the error for the layer of the given index
+Matrix NeuralNetwork::getLayerError(int layerIndex, Matrix finalOutputErrors) {
+
+	int weightsIndex = layerIndex - 1; //weights and biases has one less entry, so index is one less
+
+	if (layerIndex < layers.size() - 1) { //not the last layer
+
+		//transposes the next layers's weights
+		Matrix nextWeights_t = Matrix::Transpose(weights[weightsIndex + 1]);
+
+		//returns the error by multiplying next layers transposed weights by the next layers errors (recursive)
+		return Matrix::Multiply(nextWeights_t, getLayerError(layerIndex + 1, finalOutputErrors));
+	}
+
+	//last layer
+	return finalOutputErrors; //returns the final output error
 }
