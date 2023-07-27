@@ -55,6 +55,7 @@ void DebugTrainingData(TrainingData d) {
 //visually outputs a random number prediction
 void OutputPrediction(TrainingData d, NeuralNetwork n, int iterations) {
 
+	//resets the string write height
 	int stringY = 0;
 
 	//gets a random number image to predict from
@@ -75,12 +76,13 @@ void OutputPrediction(TrainingData d, NeuralNetwork n, int iterations) {
 	if (correctGuesses.size() > numberOfGuessesPerAccuracy)
 		correctGuesses.erase(correctGuesses.begin());
 
+	//gets the accuracy of the guess previous x guesses
 	float accuracy = 0.0f;
-	for (int i = 0; i < correctGuesses.size(); i++) 
+	for (int i = 0; i < correctGuesses.size(); i++)
 		if (correctGuesses[i])
 			accuracy++;
 	accuracy = accuracy / correctGuesses.size();
-	
+
 
 	BeginDrawing();
 	ClearBackground(RAYWHITE);
@@ -112,7 +114,7 @@ void OutputPrediction(TrainingData d, NeuralNetwork n, int iterations) {
 	stringY += stringHeight;
 
 	//prediction output
-	std::string accuracyString = "Accuracy:  " + std::to_string(accuracy * 100).substr(0,4) + "%";
+	std::string accuracyString = "Accuracy:  " + std::to_string(accuracy * 100).substr(0, 4) + "%";
 	DrawText(accuracyString.c_str(), pixelSize * imageSize + padding, stringY + padding, 20, BLACK);
 	stringY += stringHeight;
 
@@ -123,7 +125,7 @@ void OutputPrediction(TrainingData d, NeuralNetwork n, int iterations) {
 void unCappedTrain(TrainingData d) {
 
 
-	NeuralNetwork n = NeuralNetwork({ imageSize * imageSize, 10,10,10 });
+	NeuralNetwork n = NeuralNetwork({ imageSize * imageSize, 10, 10, 10 });
 
 	InitWindow(screenWidth, screenHeight, "Number approximator");
 	SetTargetFPS(60);
@@ -176,7 +178,8 @@ int main() {
 	int toLoad = 1000;
 	TrainingData d = TrainingData(toLoad);
 
-	unCappedTrain(d);
+	if (d.imageDatas.size() > 0)
+		unCappedTrain(d);
 
 	return 0;
 }

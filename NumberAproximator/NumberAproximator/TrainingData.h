@@ -29,19 +29,18 @@ public:
 
 	TrainingData(int toLoad) {
 
-		//doesnt allow more than 60000 data points
-		if (toLoad > 60000)
-			toLoad = 60000;
+		//doesnt allow more than negative data
+		bool unlimited = (toLoad < 1);
 
 		//opens the file
-		std::string fileName = "mnist_train.csv";
+		std::string fileName = "train.csv";
 		std::ifstream file(fileName);
 
 		if (!file.is_open()) {
 			std::cerr << "Error: Unable to open the file " << fileName << std::endl;
+			std::cerr << "Get the train.csv file from https://www.kaggle.com/c/digit-recognizer/data" << std::endl;
 			return;
 		}
-
 
 		//loops through each line in the file
 		std::string line;
@@ -62,17 +61,18 @@ public:
 			imageDatas.push_back(ImageData(targets, pixelValues));
 
 
-			if (iterations >= toLoad)
-				return;
-
+			if (!unlimited) //checks image count if not unlimited allowed
+				if (imageDatas.size() >= toLoad) 
+					return;
+				
 			//output restraint
-			iterations++;
-			if (iterations % outputRestraint != 0)
+			if (imageDatas.size() % outputRestraint != 0)
 				continue;
 
 			std::cout << imageDatas.size() << " images added" << std::endl;
-
 		}
+
+		std::cout << imageDatas.size() << " images added" << std::endl;
 	}
 
 	std::vector<ImageData> imageDatas;
