@@ -10,61 +10,61 @@ class Helper {
 
 public:
 
-    //returns a random float between the given ranges
-    static float RandomFloat(float lowerBound, float upperBound) {
+	//returns a random float between the given ranges
+	static float RandomFloat(float lowerBound, float upperBound) {
 
-        std::random_device rd;  // Obtain a random seed from the hardware
-        std::mt19937 gen(rd()); // Seed the random number engine
+		std::random_device rd;  // Obtain a random seed from the hardware
+		std::mt19937 gen(rd()); // Seed the random number engine
 
-        std::uniform_real_distribution<float> dis(lowerBound, upperBound); // Define the distribution
+		std::uniform_real_distribution<float> dis(lowerBound, upperBound); // Define the distribution
 
-        float randomNumber = dis(gen);  // Generate a random number between the lower and upper bounds
+		float randomNumber = dis(gen);  // Generate a random number between the lower and upper bounds
 
-        return randomNumber;
-    }
+		return randomNumber;
+	}
 
-    //returns a random weight between the given ranges
-    static int RandomInt(int lowerBound, int upperBound) {
+	//returns a random weight between the given ranges
+	static int RandomInt(int lowerBound, int upperBound) {
 
-        std::random_device rd;  // Obtain a random seed from the hardware
-        std::mt19937 gen(rd()); // Seed the random number engine
+		std::random_device rd;  // Obtain a random seed from the hardware
+		std::mt19937 gen(rd()); // Seed the random number engine
 
-        std::uniform_int_distribution<int> dis(lowerBound, upperBound); // Define the distribution
+		std::uniform_int_distribution<int> dis(lowerBound, upperBound); // Define the distribution
 
-        int randomNumber = dis(gen);  // Generate a random number between the lower and upper bounds
+		int randomNumber = dis(gen);  // Generate a random number between the lower and upper bounds
 
-        return randomNumber;
-    }
+		return randomNumber;
+	}
 
-    //maps a value with a given range to a desired range
-    static float Map(float value, float realLower, float realUpper, float desiredLower, float desiredUpper) {
+	//maps a value with a given range to a desired range
+	static float Map(float value, float realLower, float realUpper, float desiredLower, float desiredUpper) {
 
-        return desiredLower + (desiredUpper - desiredLower) * ((value - realLower) / (realUpper - realLower));
-        //https://stackoverflow.com/questions/17134839/how-does-the-map-function-in-processing-work
-    }
+		return desiredLower + (desiredUpper - desiredLower) * ((value - realLower) / (realUpper - realLower));
+		//https://stackoverflow.com/questions/17134839/how-does-the-map-function-in-processing-work
+	}
 
-    static float Sigmoid(float x) {
-        return 1.0f / (1.0f + std::exp(-x));
-    }
+	static float Sigmoid(float x) {
+		return 1.0f / (1.0f + std::exp(-x));
+	}
 
-    static float dSigmoid(float x) {
-        return x * (1.0f - x);
-    }
+	static float dSigmoid(float x) {
+		return x * (1.0f - x);
+	}
 };
 
 
-class Matrix {
+class kMatrix {
 
 public:
 
 	//default constructor
-	Matrix() {
+	kMatrix() {
 		rows = 0;
 		cols = 0;
 	}
 
 	//empty matrix constructor
-	Matrix(int _rows, int _cols) {
+	kMatrix(int _rows, int _cols) {
 		rows = _rows;
 		cols = _cols;
 
@@ -86,7 +86,7 @@ public:
 	}
 
 	//makes a matrix out of the passed vector
-	Matrix(std::vector<float> input) {
+	kMatrix(std::vector<float> input) {
 
 		rows = input.size();
 		cols = 1;
@@ -99,6 +99,29 @@ public:
 
 			//adds the vector value for this row
 			rowBuffer.push_back(input[r]);
+
+			//adds this row to the matrix
+			matrix.push_back(rowBuffer);
+		}
+	}
+
+	kMatrix(std::vector<float> input, int xSize, int ySize) {
+
+		rows = ySize;
+		cols = xSize;
+
+		if (input.size() != rows * cols)
+			return;
+
+		for (int r = 0; r < rows; r++) {
+
+			//creates a vector of columns
+			std::vector<float> rowBuffer;
+
+			for (int c = 0; c < cols; c++)
+
+				//adds the vector value for this row
+				rowBuffer.push_back(input[c + r * xSize]);
 
 			//adds this row to the matrix
 			matrix.push_back(rowBuffer);
@@ -158,7 +181,7 @@ public:
 	}
 
 	//elementwise adds the two matrices together
-	void ElementAdd(Matrix m) {
+	void ElementAdd(kMatrix m) {
 
 		if (!ElementWiseCompatible(*this, m))
 			return;
@@ -169,12 +192,12 @@ public:
 	}
 
 	//elementwise subtract
-	static Matrix ElementSubtract(Matrix m1, Matrix m2) {
+	static kMatrix ElementSubtract(kMatrix m1, kMatrix m2) {
 
 		if (!ElementWiseCompatible(m1, m2))
-			return Matrix();
+			return kMatrix();
 
-		Matrix toReturn = Matrix(m1.rows, m1.cols);
+		kMatrix toReturn = kMatrix(m1.rows, m1.cols);
 
 		for (int r = 0; r < m1.rows; r++)
 			for (int c = 0; c < m1.cols; c++)
@@ -191,7 +214,7 @@ public:
 	}
 
 	//elementwise multiplies the two matrices together
-	void ElementMultiply(Matrix m) {
+	void ElementMultiply(kMatrix m) {
 
 		if (!ElementWiseCompatible(*this, m))
 			return;
@@ -202,12 +225,12 @@ public:
 	}
 
 	//returns a new matrix whcich has the result of a matrix multiplcation on the two input matrices
-	static Matrix Multiply(Matrix m1, Matrix m2) {
+	static kMatrix Multiply(kMatrix m1, kMatrix m2) {
 
 		if (!MatrixMultiplyCompatible(m1, m2))
-			return Matrix(0, 0);
+			return kMatrix(0, 0);
 
-		Matrix toReturn = Matrix(m1.rows, m2.cols);
+		kMatrix toReturn = kMatrix(m1.rows, m2.cols);
 
 		//loops through each cell in the resulting matrix
 		for (int r = 0; r < toReturn.rows; r++)
@@ -224,9 +247,9 @@ public:
 
 
 	//returns a transposed matrix of the input matrix
-	static Matrix Transpose(Matrix m1) {
+	static kMatrix Transpose(kMatrix m1) {
 
-		Matrix m2 = Matrix(m1.cols, m1.rows);
+		kMatrix m2 = kMatrix(m1.cols, m1.rows);
 
 		for (int r = 0; r < m1.rows; r++)
 			for (int c = 0; c < m1.cols; c++)
@@ -247,9 +270,9 @@ public:
 	}
 
 	//static function applies the map function to an input 
-	static Matrix ScalarMap(Matrix m1, const std::function<float(float x)>& func) {
+	static kMatrix ScalarMap(kMatrix m1, const std::function<float(float x)>& func) {
 
-		Matrix toReturn = Matrix(m1.rows, m1.cols);
+		kMatrix toReturn = kMatrix(m1.rows, m1.cols);
 
 		for (int r = 0; r < toReturn.rows; r++) {
 			for (int c = 0; c < toReturn.cols; c++) {
@@ -263,12 +286,12 @@ public:
 	}
 
 	//returns if the two matrices can be elementwise operated
-	static bool ElementWiseCompatible(Matrix m1, Matrix m2) {
+	static bool ElementWiseCompatible(kMatrix m1, kMatrix m2) {
 		return m1.rows == m2.rows && m1.cols == m2.cols;
 	}
 
 	//returns if two matrices can be matrix multiplied
-	static bool MatrixMultiplyCompatible(Matrix m1, Matrix m2) {
+	static bool MatrixMultiplyCompatible(kMatrix m1, kMatrix m2) {
 		return m1.cols == m2.rows;
 	}
 
@@ -290,12 +313,12 @@ public:
 		for (int i = 1; i < layers.size(); i++) {
 
 			//generates a matrix of weights for this layer pair
-			Matrix w = Matrix(layers[i], layers[i - 1]);
+			kMatrix w = kMatrix(layers[i], layers[i - 1]);
 			w.RandomizeFloats(-1, 1);
 			weights.push_back(w);
 
 			//generates the bias weights for this layer pair
-			Matrix b = Matrix(layers[i], 1);
+			kMatrix b = kMatrix(layers[i], 1);
 			b.RandomizeFloats(-1, 1);
 			biases.push_back(b);
 		}
@@ -304,7 +327,7 @@ public:
 	}
 
 	//forward propegation to process the input through the layer up to the output
-	Matrix feedForward(std::vector<float> vectorInput) {
+	kMatrix feedForward(std::vector<float> vectorInput) {
 
 		//resets the vector of outputs
 		layerOutputs.clear();
@@ -315,7 +338,7 @@ public:
 			if (i == 0) { //input layer (doesn't have a previous layer to process)
 
 				//turn the input into a matrix
-				Matrix inputs = Matrix(vectorInput);
+				kMatrix inputs = kMatrix(vectorInput);
 				layerOutputs.push_back(inputs);
 
 			} else {
@@ -323,7 +346,7 @@ public:
 				int weightsIndex = i - 1; //weights and biases has one less entry, so index is one less
 
 				//computes this layer's output
-				Matrix layerOutput = Matrix::Multiply(weights[weightsIndex], layerOutputs[i - 1]); //layer's weights multiplied with the previous layer's output
+				kMatrix layerOutput = kMatrix::Multiply(weights[weightsIndex], layerOutputs[i - 1]); //layer's weights multiplied with the previous layer's output
 				layerOutput.ElementAdd(biases[weightsIndex]); //layer's output after bias
 				layerOutput.ScalarMap(Helper::Sigmoid); //activation function
 				layerOutputs.push_back(layerOutput); //save the output
@@ -335,34 +358,34 @@ public:
 	}
 
 	//trains the network using the the target data
-	Matrix train(std::vector<float> vectorInput, std::vector<float> vectorTargets) {
+	kMatrix train(std::vector<float> vectorInput, std::vector<float> vectorTargets) {
 
 		//does the prediction
-		Matrix finalOutputs = feedForward(vectorInput);
+		kMatrix finalOutputs = feedForward(vectorInput);
 
 		//gets the final output targets
-		Matrix targets = Matrix(vectorTargets);
+		kMatrix targets = kMatrix(vectorTargets);
 
 		//gets the final output errors
-		Matrix finalOutputsErrors = Matrix::ElementSubtract(targets, finalOutputs);
+		kMatrix finalOutputsErrors = kMatrix::ElementSubtract(targets, finalOutputs);
 
 		//loops through each layer
 		for (int i = layers.size() - 1; i > 0; i--) {
 
 			int weightsIndex = i - 1; //weights and biases has one less entry, so index is one less
 
-			Matrix outputs = layerOutputs[i]; //gets the current layer outputs
-			Matrix errors = getLayerError(i, finalOutputsErrors); //gets the errors for this layer
+			kMatrix outputs = layerOutputs[i]; //gets the current layer outputs
+			kMatrix errors = getLayerError(i, finalOutputsErrors); //gets the errors for this layer
 
 			//calculates the gradients
-			Matrix gradients = Matrix::ScalarMap(outputs, Helper::dSigmoid); //unsigmoids the output
+			kMatrix gradients = kMatrix::ScalarMap(outputs, Helper::dSigmoid); //unsigmoids the output
 			gradients.ElementMultiply(errors); //times each gradient by the errors
 			gradients.ScalarMultiply(learningRate); //times each errored gradient by the learning rate
 
 			//calculate the changes needed to the hidden to output weights
-			Matrix previousOutputs = layerOutputs[i - 1]; //gets the previous layer output
-			Matrix previousOutputs_t = Matrix::Transpose(previousOutputs); //transpose the hidden layer's output
-			Matrix deltaWeights = Matrix::Multiply(gradients, previousOutputs_t); //gets the change in weights required to get better outputs
+			kMatrix previousOutputs = layerOutputs[i - 1]; //gets the previous layer output
+			kMatrix previousOutputs_t = kMatrix::Transpose(previousOutputs); //transpose the hidden layer's output
+			kMatrix deltaWeights = kMatrix::Multiply(gradients, previousOutputs_t); //gets the change in weights required to get better outputs
 
 			//update hidden to output weights
 			weights[weightsIndex].ElementAdd(deltaWeights);
@@ -375,17 +398,17 @@ public:
 private:
 
 	//returns the error for the layer of the given index
-	Matrix getLayerError(int layerIndex, Matrix finalOutputErrors) {
+	kMatrix getLayerError(int layerIndex, kMatrix finalOutputErrors) {
 
 		int weightsIndex = layerIndex - 1; //weights and biases has one less entry, so index is one less
 
 		if (layerIndex < layers.size() - 1) { //not the last layer
 
 			//transposes the next layers's weights
-			Matrix nextWeights_t = Matrix::Transpose(weights[weightsIndex + 1]);
+			kMatrix nextWeights_t = kMatrix::Transpose(weights[weightsIndex + 1]);
 
 			//returns the error by multiplying next layers transposed weights by the next layers errors (recursive)
-			return Matrix::Multiply(nextWeights_t, getLayerError(layerIndex + 1, finalOutputErrors));
+			return kMatrix::Multiply(nextWeights_t, getLayerError(layerIndex + 1, finalOutputErrors));
 		}
 
 		//last layer
@@ -393,9 +416,9 @@ private:
 	}
 
 	std::vector<int> layers;
-	std::vector<Matrix> weights;
-	std::vector<Matrix> biases;
-	std::vector<Matrix> layerOutputs;
+	std::vector<kMatrix> weights;
+	std::vector<kMatrix> biases;
+	std::vector<kMatrix> layerOutputs;
 
 	float learningRate;
 };
