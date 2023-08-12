@@ -2,17 +2,18 @@
 #include <cmath>
 
 #include "raylib.h"
+#include "kNeuralNetwork.h"
 #include "Border.h"
 #include "Pipe.h"
 
 class Bird {
 public:
-	Bird() {}
+	Bird() = default;
 	Bird(Point _position) {
 		position = _position;
 	}
 
-	void Draw(int screenWidth, int screenHeight) {
+	virtual void Draw(int screenWidth, int screenHeight) {
 		DrawEllipse(position.x, position.y, radius, radius, color);
 	}
 
@@ -27,9 +28,6 @@ public:
 		//doesnt let velocity go above terminal velocity
 		if (velocity > terminalVelocity)
 			velocity = terminalVelocity;
-
-		//position.x = GetMouseX();
-		//position.y = GetMouseY();
 	}
 
 	//gives the bird upward velocity
@@ -51,7 +49,6 @@ public:
 		}
 	}
 
-
 	//returns if the bird was anywhere within the pipe
 	bool CheckPipeCollision(Pipe pipe) {
 
@@ -72,7 +69,7 @@ public:
 		float bottomClosestX = std::max(pipe.GetPosition().x - pipe.GetWidth() / 2.0f, std::min(position.x, pipe.GetPosition().x + pipe.GetWidth() / 2.0f));
 		float bottomClosestY = std::max(pipe.GetPosition().y + pipe.GetGap() / 2.0f, std::min(position.y, (float)GetScreenHeight()));
 
-		// Calculate the distance between to the  closest point
+		// Calculate the distance between to the closest point
 		float bottomDistanceX = position.x - bottomClosestX;
 		float bottomDistanceY = position.y - bottomClosestY;
 		float bottomDistance = std::sqrt(bottomDistanceX * bottomDistanceX + bottomDistanceY * bottomDistanceY);
@@ -90,15 +87,70 @@ public:
 
 	void SetColor(Color _color) { color = _color; }
 
-private:
+protected:
 	Point position;
-	int radius = 20;
-
-	float accelaration = 40;
 	float velocity = 0;
+	int radius = 20;
+	Color color = RED;
+
+private:
+	float accelaration = 40;
 	int terminalVelocity = 600;
 
 	int flapVelocity = 500;
+};
 
-	Color color = RED;
+
+class KBird : public Bird {
+
+public:
+	KBird() : Bird() {}
+	KBird(Point _position) : Bird(_position) {
+
+		brain = NeuralNetwork({ 4, 5, 1 });
+		alive = true;
+	}
+
+	virtual void Draw(int screenWidth, int screenHeight) {
+		DrawEllipseLines(position.x, position.y, radius, radius, color);
+
+	}
+	int GetDistanceToNextPipe(std::vector<Pipe> pipes) {
+
+		//loops through the pipes
+		for (int i = 0; i < pipes.size(); i++) {
+
+			//ignore pipes that have gone past the bird already
+			if (pipes[i].GetPosition().x < position.x)
+				continue;
+
+			//gets the positive value of the distance to this pipe
+			return std::abs(pipes[i].GetPosition().x - position.x);
+		}
+	}
+
+	void CleverFlap(std::vector<Pipe> pipes) {
+
+		//sets up the inputs for the thought
+		std::vector<float> inputs = {};
+		inputs.push_back(position.y);
+		inputs.push_back(velocity);
+		inputs.push_back(GetDistanceToNextPipe(pipes));
+		inputs.push_back(Pipe::GetGap());
+
+		//gets what the brains thought
+		kMatrix thought = brain.feedForward(inputs);
+
+		//flaps if input is close to 1
+		if (thought.AsVector().size() > 0)
+			if (thought.AsVector()[0] > 0.5)
+				Flap();
+	}
+
+	bool Alive() { return alive; }
+	void Kill() { alive = false; }
+
+private:
+	NeuralNetwork brain;
+	bool alive;
 };

@@ -8,7 +8,6 @@ public:
 	Pipe() {}
 	Pipe(int x, int lowerBoarder) {
 		position = Point(x + width, Helper::RandomInt(gap, lowerBoarder - gap));
-
 	}
 
 	void Draw(int screenWidth, int screenHeight) {
@@ -37,16 +36,14 @@ public:
 	}
 
 	Point GetPosition() { return position; }
-	int GetGap() { return gap; }
+	static int GetGap() { return gap; }
 	int GetWidth() { return width; }
-
-
 
 private:
 	Point position;
 
+	static const int gap = 150;
 	int width = 80;
-	int gap = 150;
 	int speed = 160;
 
 	bool score = 1;

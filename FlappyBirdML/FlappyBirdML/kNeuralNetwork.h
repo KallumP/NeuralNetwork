@@ -315,6 +315,7 @@ public:
 class NeuralNetwork {
 
 public:
+	NeuralNetwork() = default;
 	NeuralNetwork(std::vector<int> _layers) {
 
 		//saves the numbers of nodes per layer
