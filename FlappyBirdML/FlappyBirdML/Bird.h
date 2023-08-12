@@ -11,6 +11,7 @@ public:
 	Bird() = default;
 	Bird(Point _position) {
 		position = _position;
+		score = 0;
 	}
 
 	virtual void Draw(int screenWidth, int screenHeight) {
@@ -28,6 +29,8 @@ public:
 		//doesnt let velocity go above terminal velocity
 		if (velocity > terminalVelocity)
 			velocity = terminalVelocity;
+		if (velocity < -terminalVelocity)
+			velocity = -terminalVelocity;
 	}
 
 	//gives the bird upward velocity
@@ -36,17 +39,22 @@ public:
 	}
 
 	//checks floor collision
-	void CheckFloorCollision(Border barrier) {
-		if (position.y + radius > barrier.GetY())
+	bool CheckFloorCollision(Border barrier) {
+		if (position.y + radius > barrier.GetY()) {
 			position.y = barrier.GetY() - radius;
+			return true;
+		}
+		return false;
 	}
 
 	//checks ceiling collision
-	void CheckCeilingCollision(Border barrier) {
+	bool CheckCeilingCollision(Border barrier) {
 		if (position.y - radius < barrier.GetY()) {
 			position.y = barrier.GetY() + radius;
 			velocity = 0;
+			return true;
 		}
+		return false;
 	}
 
 	//returns if the bird was anywhere within the pipe
@@ -87,17 +95,21 @@ public:
 
 	void SetColor(Color _color) { color = _color; }
 
+	int GetScore() { return score; }
+	void AddScore(int toAdd) { score += toAdd; }
+
 protected:
 	Point position;
 	float velocity = 0;
 	int radius = 20;
 	Color color = RED;
+	int terminalVelocity = 600;
 
 private:
 	float accelaration = 40;
-	int terminalVelocity = 600;
 
 	int flapVelocity = 500;
+	int score;
 };
 
 
@@ -107,50 +119,82 @@ public:
 	KBird() : Bird() {}
 	KBird(Point _position) : Bird(_position) {
 
-		brain = NeuralNetwork({ 4, 5, 1 });
+		brain = NeuralNetwork({ 4, 7, 2 });
 		alive = true;
+		frameCount = 0;
+	}
+	KBird(Point _position, NeuralNetwork _brain) : Bird(_position) {
+
+		brain = _brain;
+		alive = true;
+		frameCount = 0;
 	}
 
-	virtual void Draw(int screenWidth, int screenHeight) {
+	void Draw(int screenWidth, int screenHeight) {
+
+		//draws the bird
 		DrawEllipseLines(position.x, position.y, radius, radius, color);
 
+		//draws the score
+		std::string scoreString = std::to_string(GetScore());
+		int scoreStringSize = 20;
+		int scoreStringWidth = MeasureText(scoreString.c_str(), scoreStringSize);
+		DrawText(scoreString.c_str(), position.x - scoreStringWidth / 2, position.y - scoreStringSize / 2, scoreStringSize, BLACK);
 	}
-	int GetDistanceToNextPipe(std::vector<Pipe> pipes) {
+
+	Pipe GetClosestPipe(std::vector<Pipe> pipes) {
 
 		//loops through the pipes
 		for (int i = 0; i < pipes.size(); i++) {
 
-			//ignore pipes that have gone past the bird already
-			if (pipes[i].GetPosition().x < position.x)
+			//if this pipe's x is smaller (passed the bird)
+			if ((pipes[i].GetPosition().x + pipes[i].GetWidth() / 2) - (float)position.x < 0)
 				continue;
 
-			//gets the positive value of the distance to this pipe
-			return std::abs(pipes[i].GetPosition().x - position.x);
+			return pipes[i];
 		}
 	}
 
-	void CleverFlap(std::vector<Pipe> pipes) {
+	//gets the scalar distance to p
+	float GetXDistanceToPipe(Pipe p) {
+		return std::abs((p.GetPosition().x + p.GetWidth() / 2) - (float)position.x);
+	}
+	float GetYDistanceToPipe(Pipe p) {
+		return p.GetPosition().y - (float)position.y;
+	}
+
+	//decides whether to flap
+	void Think(std::vector<Pipe> pipes) {
+
+		Pipe closestPipe = GetClosestPipe(pipes);
 
 		//sets up the inputs for the thought
 		std::vector<float> inputs = {};
-		inputs.push_back(position.y);
-		inputs.push_back(velocity);
-		inputs.push_back(GetDistanceToNextPipe(pipes));
-		inputs.push_back(Pipe::GetGap());
+		inputs.push_back(position.y / GetScreenHeight()); //bird y
+		inputs.push_back(GetXDistanceToPipe(closestPipe) / GetScreenWidth()); //pipe x distance
+		inputs.push_back((GetYDistanceToPipe(closestPipe) / GetScreenHeight() * 2) + 0.5); //pipe y distance
+		inputs.push_back((velocity / terminalVelocity * 2) + 0.5); //bird velocity
 
 		//gets what the brains thought
 		kMatrix thought = brain.feedForward(inputs);
 
-		//flaps if input is close to 1
-		if (thought.AsVector().size() > 0)
-			if (thought.AsVector()[0] > 0.5)
-				Flap();
+		if (thought.AsVector()[0] > thought.AsVector()[1])
+			Flap();
 	}
 
 	bool Alive() { return alive; }
 	void Kill() { alive = false; }
+	NeuralNetwork GetBrain() { return brain; }
+
+	int GetFrameCount() { return frameCount; }
+	void IncrementFrameCount() { frameCount++; }
+
+	void SetFitness(float _fitness) { fitness = _fitness; }
+	float GetFitness() { return fitness; }
 
 private:
 	NeuralNetwork brain;
 	bool alive;
+	int frameCount;
+	float fitness;
 };

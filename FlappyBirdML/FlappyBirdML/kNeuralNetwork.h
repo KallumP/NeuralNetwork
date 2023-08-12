@@ -10,7 +10,7 @@ struct Point {
 	float x;
 	float y;
 
-	Point() {}
+	Point() = default;
 	Point(float _x, float _y) {
 		x = _x;
 		y = _y;
@@ -62,7 +62,6 @@ public:
 		return x * (1.0f - x);
 	}
 };
-
 
 class kMatrix {
 
@@ -116,11 +115,13 @@ public:
 		}
 	}
 
+	//makes a matrix of a given size out of the input vector
 	kMatrix(std::vector<float> input, int xSize, int ySize) {
 
 		rows = ySize;
 		cols = xSize;
 
+		//checks if the input vector had enough values
 		if (input.size() != rows * cols)
 			return;
 
@@ -133,6 +134,30 @@ public:
 
 				//adds the vector value for this row
 				rowBuffer.push_back(input[c + r * xSize]);
+
+			//adds this row to the matrix
+			matrix.push_back(rowBuffer);
+		}
+	}
+
+	kMatrix(const kMatrix& toCopy) {
+
+		rows = toCopy.rows;
+		cols = toCopy.cols;
+
+		matrix = {};
+
+		//loops through each row to be initialised
+		for (int r = 0; r < rows; r++) {
+
+			//creates a vector of columns
+			std::vector<float> rowBuffer;
+
+			//loops through each column to be initialised
+			for (int c = 0; c < cols; c++)
+
+				//creates the column for this row
+				rowBuffer.push_back(toCopy.matrix[r][c]);
 
 			//adds this row to the matrix
 			matrix.push_back(rowBuffer);
@@ -306,11 +331,18 @@ public:
 		return m1.cols == m2.rows;
 	}
 
+	//mutates the values of this matrix
+	void Mutate(float mutateRate) {
+		for (int r = 0; r < rows; r++)
+			for (int c = 0; c < cols; c++)
+				if (Helper::RandomFloat(0, 1) < mutateRate)
+					matrix[r][c] *= Helper::RandomFloat(0.9, 1.1);
+	}
+
 	std::vector<std::vector<float>> matrix; //rows x cols
 	int rows;
 	int cols;
 };
-
 
 class NeuralNetwork {
 
@@ -336,6 +368,18 @@ public:
 		}
 
 		learningRate = 0.1f;
+	}
+	NeuralNetwork(const NeuralNetwork& toCopy) {
+
+		layers = toCopy.layers;
+
+		for (int i = 0; i < toCopy.weights.size(); i++) {
+
+			weights.push_back(kMatrix(toCopy.weights[i]));
+			biases.push_back(kMatrix(toCopy.biases[i]));
+		}
+
+		learningRate = toCopy.learningRate;
 	}
 
 	//forward propegation to process the input through the layer up to the output
@@ -405,6 +449,15 @@ public:
 		}
 
 		return finalOutputsErrors;
+	}
+
+	//mutates the weightings
+	void Mutate(float mutateRate) {
+
+		for (int i = 0; i < weights.size(); i++) {
+			weights[i].Mutate(mutateRate);
+			biases[i].Mutate(mutateRate);
+		}
 	}
 
 private:

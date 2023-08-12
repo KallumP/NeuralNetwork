@@ -12,7 +12,8 @@ class Game {
 public:
 	Game() {
 
-		learning = false;
+		learning = true;
+		firstGame = true;
 
 		//game borders
 		floor = Border(GetScreenHeight() - 100);
@@ -24,19 +25,24 @@ public:
 	void StartGame() {
 
 		if (learning) {
-			birds.clear();
-			for (int i = 0; i < birdCount; i++)
-				birds.push_back(KBird(Point(40, GetScreenHeight() / 2)));
 
-		} else 
+			//does not do any generation stuff for first game
+			if (firstGame) {
+
+				for (int i = 0; i < birdCount; i++)
+					birds.push_back(KBird(Point(40, GetScreenHeight() / 2)));
+				firstGame = false;
+
+			} else {
+				NextGeneration();
+			}
+
+		} else
 			bird = Bird(Point(40, GetScreenHeight() / 2));
-
-		
 
 		pipes.clear();
 		SpawnPipe();
 		timeSinceLastSpawn = 0;
-		score = 0;
 		crashed = false;
 	}
 
@@ -60,18 +66,40 @@ public:
 			bird.Draw(screenWidth, screenHeight);
 
 		//draws the ui
-		DrawScore();
+		DrawUI();
 		if (crashed)
 			DrawGameOver(screenWidth, screenHeight);
 	}
 
-	void DrawScore() {
+	void DrawUI() {
 
 		//draws the score
 		int textY = 20;
-		std::string scoreString = "Score: " + std::to_string(score);
-		DrawText(scoreString.c_str(), 20, textY, 20, BLACK);
-		textY += 20;
+
+		if (learning) {
+
+			std::string scoreString = "Bird count: " + std::to_string(NumberOfAliveBirds());
+			DrawText(scoreString.c_str(), 20, textY, 20, BLACK);
+			textY += 20;
+
+			std::string genString = "Generation: " + std::to_string(generation);
+			DrawText(genString.c_str(), 20, textY, 20, BLACK);
+			textY += 20;
+
+			std::string frameString = "Frame time: " + std::to_string(previousFrameTime);
+			DrawText(frameString.c_str(), 20, textY, 20, BLACK);
+			textY += 20;
+
+			std::string iterString = "Iterations per frame: " + std::to_string(ticksPerFrame);
+			DrawText(iterString.c_str(), 20, textY, 20, BLACK);
+			textY += 20;
+
+		} else {
+
+			std::string scoreString = "Score: " + std::to_string(bird.GetScore());
+			DrawText(scoreString.c_str(), 20, textY, 20, BLACK);
+			textY += 20;
+		}
 	}
 
 	void DrawGameOver(int screenWidth, int screenHeight) {
@@ -98,14 +126,20 @@ public:
 		DrawText(restartString.c_str(), screenWidth / 2 - restartStringWidth / 2, screenHeight / 2 - gameOverHeight / 2 + 60, restartFontSize, BLACK);
 	}
 
-	void Tick(float timeElapsed) {
+	void Tick(float timeElapsed, float desiredFrameTime) {
 
-		if (learning)
-			LearningBirdLogic(timeElapsed);
-		else
+		previousFrameTime = timeElapsed;
+
+		if (learning) {
+			LearningInputs();
+			for (int i = 0; i < ticksPerFrame; i++) {
+				LearningBirdLogic(desiredFrameTime);
+				PipeLogic(desiredFrameTime);
+			}
+		} else {
 			ManualBirdLogic(timeElapsed);
-
-		PipeLogic(timeElapsed);
+			PipeLogic(timeElapsed);
+		}
 	}
 
 	void ManualBirdLogic(float timeElapsed) {
@@ -125,8 +159,8 @@ public:
 		bird.Tick(timeElapsed);
 
 		//check for game border collisions
-		bird.CheckFloorCollision(floor);
-		bird.CheckCeilingCollision(ceiling);
+		if (bird.CheckFloorCollision(floor) || bird.CheckCeilingCollision(ceiling))
+			crashed = true;
 
 		//loops through the pipes
 		for (int i = pipes.size() - 1; i >= 0; i--) {
@@ -138,8 +172,8 @@ public:
 			}
 
 			//increases the score if the bird passes this pipe
-			if (bird.CheckPassedPipe(pipes[i]))
-				score += pipes[i].TakeScore();
+			if (!crashed && bird.CheckPassedPipe(pipes[i]))
+				bird.AddScore(pipes[i].TakeScore(0));
 		}
 	}
 
@@ -154,12 +188,12 @@ public:
 				//only does logic if the bird is alive
 				if (birds[i].Alive()) {
 
-					birds[i].CleverFlap(pipes);
+					birds[i].Think(pipes);
 					birds[i].Tick(timeElapsed);
 
 					//check for game border collisions
-					birds[i].CheckFloorCollision(floor);
-					birds[i].CheckCeilingCollision(ceiling);
+					if (birds[i].CheckCeilingCollision(ceiling) || birds[i].CheckFloorCollision(floor))
+						birds[i].Kill();
 
 					//loops through each pipe
 					for (int j = 0; j < pipes.size(); j++) {
@@ -171,12 +205,17 @@ public:
 						}
 
 						//increases the score if the bird passes this pipe
-						if (birds[i].CheckPassedPipe(pipes[j]))
-							score += pipes[j].TakeScore();
+						if (birds[i].Alive() && birds[i].CheckPassedPipe(pipes[j]))
+							birds[i].AddScore(pipes[j].TakeScore(i));
 					}
+
+					if (birds[i].Alive())
+						birds[i].IncrementFrameCount();
 				}
 			}
+
 		} else {
+
 			StartGame();
 		}
 	}
@@ -201,12 +240,33 @@ public:
 		}
 	}
 
-	//returns if any birds are still alive
-	bool AliveBirdsRemain() {
+	void LearningInputs() {
+		if (IsKeyDown(KEY_LEFT))
+			ticksPerFrame--;
+		if (IsKeyDown(KEY_RIGHT))
+			ticksPerFrame++;
+
+		if (ticksPerFrame < 1)
+			ticksPerFrame = 1;
+
+		if (IsKeyDown(KEY_R)) {
+			generation = 0;
+			StartGame();
+		}
+	}
+
+	//returns the number of alive birds
+	int NumberOfAliveBirds() {
+		int x = 0;
 		for (int i = 0; i < birds.size(); i++)
 			if (birds[i].Alive())
-				return true;
-		return false;
+				x++;
+		return x;
+	}
+
+	//returns if any birds are still alive
+	bool AliveBirdsRemain() {
+		return NumberOfAliveBirds() > 0;
 	}
 
 	//attempts the spawn a pipe based on how long its been
@@ -225,12 +285,56 @@ public:
 		pipes.push_back(Pipe(GetScreenWidth(), floor.GetY()));
 	}
 
+	//gets the next generation of birds
+	void NextGeneration() {
+
+		//saves this generation of birds
+		previousGeneration = birds;
+		CalculateFitness();
+
+		//clears the birds
+		birds.clear();
+
+		//repopulates the birds
+		for (int i = 0; i < birdCount; i++) {
+
+			NeuralNetwork newBrain = PickBrain();
+			newBrain.Mutate(0.3);
+			birds.push_back(KBird(Point(40, GetScreenHeight() / 2), newBrain));
+		}
+
+		generation++;
+	}
+
+	//calculates the fitness of each bird
+	void CalculateFitness() {
+		float sum = 0;
+		for (int i = 0; i < previousGeneration.size(); i++)
+			sum += previousGeneration[i].GetFrameCount();
+
+		for (int i = 0; i < previousGeneration.size(); i++)
+			previousGeneration[i].SetFitness(previousGeneration[i].GetFrameCount() / sum);
+	}
+
+	//picks a new brain based off the fitness
+	NeuralNetwork PickBrain() {
+
+		int index = 0;
+		float r = Helper::RandomFloat(0, 1);
+		while (r > 0 && index < previousGeneration.size()) {
+			r = r - previousGeneration[index].GetFitness();
+			index++;
+		}
+		index--;
+		KBird pickedBird = previousGeneration[index];
+
+		return pickedBird.GetBrain();
+	}
+
 private:
 	bool crashed;
-	int score;
 
 	Bird bird;
-	std::vector<KBird> birds;
 
 	std::vector<Pipe> pipes;
 	float pipeSpawnRate = 1.8f;
@@ -240,5 +344,11 @@ private:
 	Border ceiling;
 
 	bool learning;
-	int birdCount = 200;
+	std::vector<KBird> birds;
+	std::vector<KBird> previousGeneration;
+	int birdCount = 40;
+	bool firstGame;
+	int ticksPerFrame = 1;
+	float previousFrameTime;
+	int generation = 1;
 };

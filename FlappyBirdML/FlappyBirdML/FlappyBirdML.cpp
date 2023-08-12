@@ -22,7 +22,7 @@ int main() {
 
         float tickStart = GetTime();
 
-        game.Tick(tickTime);
+        game.Tick(tickTime, 1/60.0f);
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
@@ -34,6 +34,5 @@ int main() {
         float tickEnd = GetTime();
         tickTime = tickEnd - tickStart;
     }
-
 }
 

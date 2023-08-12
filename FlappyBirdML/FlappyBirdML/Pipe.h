@@ -24,10 +24,25 @@ public:
 	}
 
 	//returns and empties the score of this pipe
-	int TakeScore() {
-		int toReturn = score;
-		score = 0;
-		return toReturn;
+	int TakeScore(int birdIndex) {
+
+		if (!ScoreAlreadyTaken(birdIndex)) {
+
+			//saves that the score has been taken for this one
+			scoreTakenFor.push_back(birdIndex);
+
+			return score;
+		}
+
+		return 0;
+	}
+
+	//returns if the score has already been taken for this bird
+	bool ScoreAlreadyTaken(int birdIndex) {
+		for (int i = 0; i < scoreTakenFor.size(); i++)
+			if (scoreTakenFor[i] == birdIndex)
+				return true;
+		return false;
 	}
 
 	//returns if the pipe is offscreen
@@ -42,9 +57,11 @@ public:
 private:
 	Point position;
 
-	static const int gap = 150;
+	static const int gap = 200;
 	int width = 80;
 	int speed = 160;
 
 	bool score = 1;
+
+	std::vector<int> scoreTakenFor;
 };
