@@ -142,13 +142,13 @@ public:
 		DrawText(scoreString.c_str(), position.x - scoreStringWidth / 2, position.y - scoreStringSize / 2, scoreStringSize, BLACK);
 	}
 
-	Pipe GetClosestPipe(std::vector<Pipe> pipes) {
+	static Pipe GetClosestPipe(std::vector<Pipe> pipes, KBird b) {
 
 		//loops through the pipes
 		for (int i = 0; i < pipes.size(); i++) {
 
 			//if this pipe's x is smaller (passed the bird)
-			if ((pipes[i].GetPosition().x + pipes[i].GetWidth() / 2) - (float)position.x < 0)
+			if ((pipes[i].GetPosition().x + pipes[i].GetWidth() / 2) < (float)b.position.x)
 				continue;
 
 			return pipes[i];
@@ -164,15 +164,13 @@ public:
 	}
 
 	//decides whether to flap
-	void Think(std::vector<Pipe> pipes) {
-
-		Pipe closestPipe = GetClosestPipe(pipes);
+	void Think(Pipe p) {
 
 		//sets up the inputs for the thought
 		std::vector<float> inputs = {};
 		inputs.push_back(position.y / GetScreenHeight()); //bird y
-		inputs.push_back(GetXDistanceToPipe(closestPipe) / GetScreenWidth()); //pipe x distance
-		inputs.push_back((GetYDistanceToPipe(closestPipe) / GetScreenHeight() * 2) + 0.5); //pipe y distance
+		inputs.push_back(GetXDistanceToPipe(p) / GetScreenWidth()); //pipe x distance
+		inputs.push_back((GetYDistanceToPipe(p) / GetScreenHeight() * 2) + 0.5); //pipe y distance
 		inputs.push_back((velocity / terminalVelocity * 2) + 0.5); //bird velocity
 
 		//gets what the brains thought

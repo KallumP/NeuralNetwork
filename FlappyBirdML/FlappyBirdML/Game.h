@@ -179,6 +179,8 @@ public:
 
 	void LearningBirdLogic(float timeElapsed) {
 
+		bool pipeFound = false;
+		Pipe closestPipe;
 		//keeps looping while there are still alive birds left
 		if (AliveBirdsRemain()) {
 
@@ -188,7 +190,13 @@ public:
 				//only does logic if the bird is alive
 				if (birds[i].Alive()) {
 
-					birds[i].Think(pipes);
+					if (!pipeFound) {
+
+						closestPipe = KBird::GetClosestPipe(pipes, birds[i]);
+						pipeFound = true;
+					}
+
+					birds[i].Think(closestPipe);
 					birds[i].Tick(timeElapsed);
 
 					//check for game border collisions
