@@ -173,7 +173,7 @@ int main() {
 	padding = 20;
 	stringHeight = 20;
 
-	numberOfGuessesPerAccuracy = 30;
+	numberOfGuessesPerAccuracy = 100;
 
 	int toLoad = 1000;
 	TrainingData d = TrainingData(toLoad);

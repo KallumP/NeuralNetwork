@@ -78,20 +78,24 @@ public:
 
 		if (learning) {
 
-			std::string scoreString = "Bird count: " + std::to_string(NumberOfAliveBirds());
-			DrawText(scoreString.c_str(), 20, textY, 20, BLACK);
+			std::string drawString = "Bird count: " + std::to_string(NumberOfAliveBirds());
+			DrawText(drawString.c_str(), 20, textY, 20, BLACK);
 			textY += 20;
 
-			std::string genString = "Generation: " + std::to_string(generation);
-			DrawText(genString.c_str(), 20, textY, 20, BLACK);
+			drawString = "Generation: " + std::to_string(generation);
+			DrawText(drawString.c_str(), 20, textY, 20, BLACK);
 			textY += 20;
 
-			std::string frameString = "Frame time: " + std::to_string(previousFrameTime);
-			DrawText(frameString.c_str(), 20, textY, 20, BLACK);
+			drawString = "Frame time: " + std::to_string(previousFrameTime);
+			DrawText(drawString.c_str(), 20, textY, 20, BLACK);
 			textY += 20;
 
-			std::string iterString = "Iterations per frame: " + std::to_string(ticksPerFrame);
-			DrawText(iterString.c_str(), 20, textY, 20, BLACK);
+			drawString = "Iterations per frame: " + std::to_string(ticksPerFrame);
+			DrawText(drawString.c_str(), 20, textY, 20, BLACK);
+			textY += 20;
+
+			drawString = "Mutation rate: " + std::to_string(mutationRate);
+			DrawText(drawString.c_str(), 20, textY, 20, BLACK);
 			textY += 20;
 
 		} else {
@@ -257,10 +261,24 @@ public:
 		if (ticksPerFrame < 1)
 			ticksPerFrame = 1;
 
+
 		if (IsKeyDown(KEY_R)) {
 			generation = 0;
 			StartGame();
 		}
+
+		
+		if (IsKeyDown(KEY_UP))
+			mutationRate += mutationIncreaseRate;
+
+		if (IsKeyDown(KEY_DOWN))
+			mutationRate -= mutationIncreaseRate;
+
+		if (mutationRate <= 0)
+			mutationRate = 0.05;
+
+		if (mutationRate > 1)
+			mutationRate = 1;
 	}
 
 	//returns the number of alive birds
@@ -306,8 +324,8 @@ public:
 		//repopulates the birds
 		for (int i = 0; i < birdCount; i++) {
 
-			NeuralNetwork newBrain = PickBrain();
-			newBrain.Mutate(0.3);
+			kNeuralNetwork newBrain = PickBrain();
+			newBrain.Mutate(mutationRate);
 			birds.push_back(KBird(Point(40, GetScreenHeight() / 2), newBrain));
 		}
 
@@ -325,7 +343,7 @@ public:
 	}
 
 	//picks a new brain based off the fitness
-	NeuralNetwork PickBrain() {
+	kNeuralNetwork PickBrain() {
 
 		int index = 0;
 		float r = Helper::RandomFloat(0, 1);
@@ -355,6 +373,8 @@ private:
 	std::vector<KBird> birds;
 	std::vector<KBird> previousGeneration;
 	int birdCount = 40;
+	float mutationRate = 0.3;
+	float mutationIncreaseRate = 0.05;
 	bool firstGame;
 	int ticksPerFrame = 1;
 	float previousFrameTime;

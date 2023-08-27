@@ -119,11 +119,11 @@ public:
 	KBird() : Bird() {}
 	KBird(Point _position) : Bird(_position) {
 
-		brain = NeuralNetwork({ 4, 7, 2 });
+		brain = kNeuralNetwork({ 4, 10, 2 });
 		alive = true;
 		frameCount = 0;
 	}
-	KBird(Point _position, NeuralNetwork _brain) : Bird(_position) {
+	KBird(Point _position, kNeuralNetwork _brain) : Bird(_position) {
 
 		brain = _brain;
 		alive = true;
@@ -174,7 +174,7 @@ public:
 		inputs.push_back((velocity / terminalVelocity * 2) + 0.5); //bird velocity
 
 		//gets what the brains thought
-		kMatrix thought = brain.feedForward(inputs);
+		kMatrix thought = brain.guess(inputs);
 
 		if (thought.AsVector()[0] > thought.AsVector()[1])
 			Flap();
@@ -182,7 +182,7 @@ public:
 
 	bool Alive() { return alive; }
 	void Kill() { alive = false; }
-	NeuralNetwork GetBrain() { return brain; }
+	kNeuralNetwork GetBrain() { return brain; }
 
 	int GetFrameCount() { return frameCount; }
 	void IncrementFrameCount() { frameCount++; }
@@ -191,7 +191,7 @@ public:
 	float GetFitness() { return fitness; }
 
 private:
-	NeuralNetwork brain;
+	kNeuralNetwork brain;
 	bool alive;
 	int frameCount;
 	float fitness;
