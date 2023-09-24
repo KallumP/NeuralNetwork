@@ -6,6 +6,17 @@
 #include <string>
 #include <functional>
 
+struct Point {
+	float x;
+	float y;
+
+	Point() = default;
+	Point(float _x, float _y) {
+		x = _x;
+		y = _y;
+	}
+};
+
 class Helper {
 
 public:
@@ -51,7 +62,6 @@ public:
 		return x * (1.0f - x);
 	}
 };
-
 
 class kMatrix {
 
@@ -105,11 +115,13 @@ public:
 		}
 	}
 
+	//makes a matrix of a given size out of the input vector
 	kMatrix(std::vector<float> input, int xSize, int ySize) {
 
 		rows = ySize;
 		cols = xSize;
 
+		//checks if the input vector had enough values
 		if (input.size() != rows * cols)
 			return;
 
@@ -122,6 +134,31 @@ public:
 
 				//adds the vector value for this row
 				rowBuffer.push_back(input[c + r * xSize]);
+
+			//adds this row to the matrix
+			matrix.push_back(rowBuffer);
+		}
+	}
+
+	//copy constructor
+	kMatrix(const kMatrix& toCopy) {
+
+		rows = toCopy.rows;
+		cols = toCopy.cols;
+
+		matrix = {};
+
+		//loops through each row to be initialised
+		for (int r = 0; r < rows; r++) {
+
+			//creates a vector of columns
+			std::vector<float> rowBuffer;
+
+			//loops through each column to be initialised
+			for (int c = 0; c < cols; c++)
+
+				//creates the column for this row
+				rowBuffer.push_back(toCopy.matrix[r][c]);
 
 			//adds this row to the matrix
 			matrix.push_back(rowBuffer);
@@ -174,14 +211,14 @@ public:
 
 
 	//adds the input value to all cells in the matrix
-	void ScalarAdd(float n) {
+	void Add(float n) {
 		for (int r = 0; r < rows; r++)
 			for (int c = 0; c < cols; c++)
 				matrix[r][c] += n;
 	}
 
 	//elementwise adds the two matrices together
-	void ElementAdd(kMatrix m) {
+	void Add(kMatrix m) {
 
 		if (!ElementWiseCompatible(*this, m))
 			return;
@@ -192,7 +229,7 @@ public:
 	}
 
 	//elementwise subtract
-	static kMatrix ElementSubtract(kMatrix m1, kMatrix m2) {
+	static kMatrix Subtract(kMatrix m1, kMatrix m2) {
 
 		if (!ElementWiseCompatible(m1, m2))
 			return kMatrix();
@@ -207,14 +244,14 @@ public:
 	}
 
 	//multiplies the input value to all the cells in the matrix
-	void ScalarMultiply(float n) {
+	void Multiply(float n) {
 		for (int r = 0; r < rows; r++)
 			for (int c = 0; c < cols; c++)
 				matrix[r][c] *= n;
 	}
 
 	//elementwise multiplies the two matrices together
-	void ElementMultiply(kMatrix m) {
+	void Multiply(kMatrix m) {
 
 		if (!ElementWiseCompatible(*this, m))
 			return;
@@ -295,16 +332,24 @@ public:
 		return m1.cols == m2.rows;
 	}
 
+	//mutates the values of this matrix
+	void Mutate(float mutateRate) {
+		for (int r = 0; r < rows; r++)
+			for (int c = 0; c < cols; c++)
+				if (Helper::RandomFloat(0, 1) < mutateRate)
+					matrix[r][c] *= Helper::RandomFloat(0.9, 1.1);
+	}
+
 	std::vector<std::vector<float>> matrix; //rows x cols
 	int rows;
 	int cols;
 };
 
-
-class NeuralNetwork {
+class kNeuralNetwork {
 
 public:
-	NeuralNetwork(std::vector<int> _layers) {
+	kNeuralNetwork() = default;
+	kNeuralNetwork(std::vector<int> _layers) {
 
 		//saves the numbers of nodes per layer
 		layers = _layers;
@@ -325,9 +370,21 @@ public:
 
 		learningRate = 0.1f;
 	}
+	kNeuralNetwork(const kNeuralNetwork& toCopy) {
 
-	//forward propegation to process the input through the layer up to the output
-	kMatrix feedForward(std::vector<float> vectorInput) {
+		layers = toCopy.layers;
+
+		for (int i = 0; i < toCopy.weights.size(); i++) {
+
+			weights.push_back(kMatrix(toCopy.weights[i]));
+			biases.push_back(kMatrix(toCopy.biases[i]));
+		}
+
+		learningRate = toCopy.learningRate;
+	}
+
+	//forward propegation to process the input through the layer up to the output (feed forwarding)
+	kMatrix guess(std::vector<float> vectorInput) {
 
 		//resets the vector of outputs
 		layerOutputs.clear();
@@ -347,7 +404,7 @@ public:
 
 				//computes this layer's output
 				kMatrix layerOutput = kMatrix::Multiply(weights[weightsIndex], layerOutputs[i - 1]); //layer's weights multiplied with the previous layer's output
-				layerOutput.ElementAdd(biases[weightsIndex]); //layer's output after bias
+				layerOutput.Add(biases[weightsIndex]); //layer's output after bias
 				layerOutput.ScalarMap(Helper::Sigmoid); //activation function
 				layerOutputs.push_back(layerOutput); //save the output
 			}
@@ -357,17 +414,17 @@ public:
 		return layerOutputs[layerOutputs.size() - 1];
 	}
 
-	//trains the network using the the target data
+	//trains the network using the the target data (backward propegation)
 	kMatrix train(std::vector<float> vectorInput, std::vector<float> vectorTargets) {
 
 		//does the prediction
-		kMatrix finalOutputs = feedForward(vectorInput);
+		kMatrix finalOutputs = guess(vectorInput);
 
 		//gets the final output targets
 		kMatrix targets = kMatrix(vectorTargets);
 
 		//gets the final output errors
-		kMatrix finalOutputsErrors = kMatrix::ElementSubtract(targets, finalOutputs);
+		kMatrix finalOutputsErrors = kMatrix::Subtract(targets, finalOutputs);
 
 		//loops through each layer
 		for (int i = layers.size() - 1; i > 0; i--) {
@@ -379,8 +436,8 @@ public:
 
 			//calculates the gradients
 			kMatrix gradients = kMatrix::ScalarMap(outputs, Helper::dSigmoid); //unsigmoids the output
-			gradients.ElementMultiply(errors); //times each gradient by the errors
-			gradients.ScalarMultiply(learningRate); //times each errored gradient by the learning rate
+			gradients.Multiply(errors); //times each gradient by the errors
+			gradients.Multiply(learningRate); //times each errored gradient by the learning rate
 
 			//calculate the changes needed to the hidden to output weights
 			kMatrix previousOutputs = layerOutputs[i - 1]; //gets the previous layer output
@@ -388,11 +445,20 @@ public:
 			kMatrix deltaWeights = kMatrix::Multiply(gradients, previousOutputs_t); //gets the change in weights required to get better outputs
 
 			//update hidden to output weights
-			weights[weightsIndex].ElementAdd(deltaWeights);
-			biases[weightsIndex].ElementAdd(gradients);
+			weights[weightsIndex].Add(deltaWeights);
+			biases[weightsIndex].Add(gradients);
 		}
 
 		return finalOutputsErrors;
+	}
+
+	//mutates the weightings
+	void Mutate(float mutateRate) {
+
+		for (int i = 0; i < weights.size(); i++) {
+			weights[i].Mutate(mutateRate);
+			biases[i].Mutate(mutateRate);
+		}
 	}
 
 private:
